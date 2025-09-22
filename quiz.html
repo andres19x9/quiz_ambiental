@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interactivas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden; /* Safari */
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-2">Flashcards: La Energía en los Ecosistemas</h1>
+        <p class="text-center text-gray-600 dark:text-gray-400 mb-6">Toca la tarjeta para ver la respuesta. Usa los botones para navegar.</p>
+
+        <div id="flashcard-container" class="relative w-full h-80 perspective-1000">
+            <!-- Card will be inserted here -->
+        </div>
+
+        <div class="flex justify-between items-center mt-6">
+            <button id="prev-btn" class="bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition-colors">
+                Anterior
+            </button>
+            <div id="card-counter" class="text-lg font-medium">1 / 31</div>
+            <button id="next-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Siguiente
+            </button>
+        </div>
+         <div class="flex justify-center mt-4">
+             <button id="shuffle-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Barajar Tarjetas
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const flashcards = [
+            { question: "Ley que establece que la energía no se crea ni se destruye, solo se transforma.", answer: "Primera Ley de la Termodinámica / Ley de la Conservación de la Energía" },
+            { question: "La energía total de un ecosistema permanece constante, aunque puede cambiar de forma.", answer: "Primera Ley de la Termodinámica" },
+            { question: "Durante cada transferencia de energía, una parte se disipa en forma de calor y la energía no se recicla.", answer: "Segunda Ley de la Termodinámica" },
+            { question: "La energía en los ecosistemas no se recicla, sino que se pierde gradualmente a medida que fluye por la cadena alimenticia.", answer: "Segunda Ley de la Termodinámica" },
+            { question: "Ejemplo de transformación de energía: la energía de la ___ se transforma en ___ mediante fotosíntesis.", answer: "Luz del sol → Energía química (glucosa)" },
+            { question: "Proceso en donde se produce energía a través del consumo de alimentos.", answer: "Respiración celular (metabolismo) / Actividad metabólica" },
+            { question: "Tipo de metabolismo con oxígeno y sin oxígeno.", answer: "Aeróbico; Anaeróbico" },
+            { question: "Molécula clave del metabolismo energético (C₆H₁₂O₆).", answer: "Glucosa" },
+            { question: "Menciona tres funciones que consumen energía.", answer: "Respiración celular; digestión; regulación de la temperatura; circulación sanguínea; contracción muscular; funcionamiento del cerebro y nervios" },
+            { question: "Proceso biológico que reduce el tamaño de los alimentos para que el cuerpo pueda absorberlos con mayor facilidad.", answer: "Digestión" },
+            { question: "Tasa a la que los organismos producen materia orgánica en un ecosistema.", answer: "Productividad" },
+            { question: "Medida de cuánta energía solar es captada por los organismos fotosintéticos y convertida en energía química utilizable.", answer: "Productividad" },
+            { question: "Cantidad de materia viva almacenada en un ecosistema.", answer: "Biomasa en pie" },
+            { question: "Cantidad de materia o energía acumulada por unidad de área en cierto intervalo de tiempo.", answer: "Producción" },
+            { question: "Velocidad a la cual se acumula materia o energía en los tejidos de los ecosistemas.", answer: "Productividad" },
+            { question: "Tasa o velocidad a la que los organismos autótrofos forman energía y materia.", answer: "Productividad primaria" },
+            { question: "Dos procesos principales donde los productores primarios utilizan la energía fijada.", answer: "Metabolismo (respiración) y Crecimiento (producción de tejidos)" },
+            { question: "Dos tipos de productividad primaria.", answer: "Productividad primaria bruta (PPB); Productividad primaria neta (PPN)" },
+            { question: "Factores que afectan la productividad primaria (menciona todos).", answer: "Radiación solar; temperatura del aire; nutrientes minerales; agua; profundidad del agua; disponibilidad de nutrientes; concentración de CO₂" },
+            { question: "Velocidad a la que los organismos heterótrofos producen nuevos tejidos a partir de la materia y energía que obtienen de otros alimentos.", answer: "Productividad secundaria" },
+            { question: "Atributo ecosistémico que se refiere a la forma en la que se organizan los organismos en un ecosistema, según el tipo de alimento que consumen.", answer: "Estructura trófica" },
+            { question: "Menciona los tres rasgos centrales de la estructura trófica.", answer: "Niveles tróficos; conectancia; red alimentaria" },
+            { question: "Un nivel trófico no representa la posición fija de un organismo, sino una de sus posibles...", answer: "Actividades alimentarias" },
+            { question: "Esquema lineal que indica el paso de energía de una especie a otra en un ecosistema.", answer: "Cadena trófica / Cadena alimentaria" },
+            { question: "Tres razones por las cuales las cadenas tróficas son cortas.", answer: "La productividad primaria neta tiene límites; las eficiencias de transferencia trófica son bajas; existen límites físicos en el tamaño corporal de los depredadores" },
+            { question: "Conjunto de cadenas tróficas entrelazadas de forma compleja.", answer: "Red alimentaria / Red trófica" },
+            { question: "Dos atributos fundamentales de una red alimentaria.", answer: "Número de especies que la componen; nivel de conectancia" },
+            { question: "Modelo sencillo que representa la productividad relativa de los niveles tróficos del ecosistema; propuesto por ___ y ___", answer: "Charles Elton; Raymond Lindeman" },
+            { question: "Regla que indica que solo el 10% de la energía se transfiere al siguiente nivel trófico.", answer: "Ley del 10%" },
+            { question: "Toda la energía captada por los autótrofos a través de la fotosíntesis.", answer: "Productividad primaria bruta (PPB)" },
+            { question: "Energía que queda disponible para los consumidores después de descontar la respiración de los productores.", answer: "Productividad primaria neta (PPN)" },
+        ];
+
+        let currentCard = 0;
+
+        const flashcardContainer = document.getElementById('flashcard-container');
+        const cardCounter = document.getElementById('card-counter');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const shuffleBtn = document.getElementById('shuffle-btn');
+
+        function createCard(index) {
+            const cardData = flashcards[index];
+            const card = document.createElement('div');
+            card.className = 'card absolute w-full h-full rounded-2xl shadow-lg';
+            card.innerHTML = `
+                <div class="card-face absolute w-full h-full bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center p-6 text-center">
+                    <p class="text-2xl">${cardData.question}</p>
+                </div>
+                <div class="card-face card-back absolute w-full h-full bg-blue-100 dark:bg-blue-900 rounded-2xl flex items-center justify-center p-6 text-center">
+                    <p class="text-xl font-semibold">${cardData.answer}</p>
+                </div>
+            `;
+            card.addEventListener('click', () => {
+                card.classList.toggle('flipped');
+            });
+            return card;
+        }
+        
+        function showCard(index) {
+            flashcardContainer.innerHTML = '';
+            const newCard = createCard(index);
+            flashcardContainer.appendChild(newCard);
+            cardCounter.textContent = `${index + 1} / ${flashcards.length}`;
+            updateButtons();
+        }
+        
+        function updateButtons() {
+            prevBtn.disabled = currentCard === 0;
+            nextBtn.disabled = currentCard === flashcards.length - 1;
+            prevBtn.classList.toggle('opacity-50', currentCard === 0);
+            nextBtn.classList.toggle('opacity-50', currentCard === flashcards.length - 1);
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentCard > 0) {
+                currentCard--;
+                showCard(currentCard);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentCard < flashcards.length - 1) {
+                currentCard++;
+                showCard(currentCard);
+            }
+        });
+
+        shuffleBtn.addEventListener('click', () => {
+            for (let i = flashcards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+            }
+            currentCard = 0;
+            showCard(currentCard);
+        });
+
+        // Initial load
+        showCard(currentCard);
+    </script>
+</body>
+</html>
